@@ -1114,12 +1114,24 @@ function ArcModal({arc,state,onUpdate,onClose}){
           </button>
         ))}
       </div>
-      <div style={{flex:1,overflowY:"auto",padding:"12px 16px",paddingBottom:"80px"}}>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px",paddingBottom:"32px"}}>
         {activeTab==="episodes"&&(
           <div>
             {arc.epsEssential.length>0&&<div style={{marginBottom:"16px"}}><div style={{color:"#f0a500",fontWeight:700,marginBottom:"8px",fontSize:"13px"}}>🌟 Essenciais</div>{arc.epsEssential.map(ep=><EpRow key={ep} ep={ep} type="essential" state={state} onToggle={toggleEp}/>)}</div>}
             {(arc.epsRecommended||[]).length>0&&<div style={{marginBottom:"16px"}}><div style={{color:"#1abc9c",fontWeight:700,marginBottom:"8px",fontSize:"13px"}}>👍 Recomendados</div>{arc.epsRecommended.map(ep=><EpRow key={ep} ep={ep} type="recommended" state={state} onToggle={toggleEp}/>)}</div>}
             {fillerEps.length>0&&<div style={{marginBottom:"16px"}}><div style={{color:"rgba(255,255,255,0.4)",fontWeight:700,marginBottom:"8px",fontSize:"13px"}}>💤 Fillers (pode pular)</div>{fillerEps.map(ep=><EpRow key={ep} ep={ep} type="filler" state={state} onToggle={toggleEp}/>)}</div>}
+            {/* BOTÃO QUIZ DENTRO DO SCROLL */}
+            <div style={{marginTop:"24px",paddingTop:"16px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+              {allEssentialWatched&&!quizDone?(
+                <button onClick={()=>setShowQuiz(true)} style={{width:"100%",padding:"16px",borderRadius:"16px",border:"none",cursor:"pointer",background:"linear-gradient(135deg,#f0a500,#ffd700)",color:"#0a1628",fontFamily:"Cinzel,serif",fontWeight:700,fontSize:"16px",boxShadow:"0 4px 20px rgba(240,165,0,0.4)"}}>⚓ Iniciar Quiz do Arco!</button>
+              ):quizDone?(
+                <div style={{textAlign:"center",color:"#1abc9c",fontWeight:700,fontSize:"15px",padding:"16px"}}>✅ Quiz completo! {state.quizResults[arc.id]?.score}/{arc.quiz.length} corretas</div>
+              ):(
+                <div style={{textAlign:"center",color:"rgba(255,255,255,0.4)",fontSize:"13px",padding:"12px",background:"rgba(255,255,255,0.02)",borderRadius:"12px"}}>
+                  🔒 Marque todos os {arc.epsEssential.length} essenciais para liberar o quiz!
+                </div>
+              )}
+            </div>
           </div>
         )}
         {activeTab==="tips"&&(
@@ -1131,15 +1143,6 @@ function ArcModal({arc,state,onUpdate,onClose}){
               </div>
             ))}
           </div>
-        )}
-      </div>
-      <div style={{padding:"12px 16px",borderTop:"1px solid rgba(255,255,255,0.05)",background:"rgba(10,22,40,0.98)",flexShrink:0}}>
-        {allEssentialWatched&&!quizDone?(
-          <button onClick={()=>setShowQuiz(true)} style={{width:"100%",padding:"14px",borderRadius:"16px",border:"none",cursor:"pointer",background:"linear-gradient(135deg,#f0a500,#ffd700)",color:"#0a1628",fontFamily:"Cinzel,serif",fontWeight:700,fontSize:"16px",boxShadow:"0 4px 20px rgba(240,165,0,0.4)"}}>⚓ Iniciar Quiz do Arco!</button>
-        ):quizDone?(
-          <div style={{textAlign:"center",color:"#1abc9c",fontWeight:700,fontSize:"15px"}}>✅ Quiz completo! {state.quizResults[arc.id]?.score}/{arc.quiz.length} corretas</div>
-        ):(
-          <div style={{textAlign:"center",color:"rgba(255,255,255,0.5)",fontSize:"13px"}}>Assista todos os episódios essenciais para liberar o quiz!</div>
         )}
       </div>
     </div>
