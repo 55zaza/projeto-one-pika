@@ -1088,7 +1088,7 @@ function ArcModal({arc,state,onUpdate,onClose}){
   if(showQuiz)return<Quiz arc={arc} state={state} onUpdate={onUpdate} onClose={()=>{setShowQuiz(false);onClose();}}/>;
 
   return(
-    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(5,10,20,0.92)",display:"flex",flexDirection:"column",animation:"fadeIn 0.3s ease",fontFamily:"Nunito,sans-serif"}}>
+    <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(5,10,20,0.92)",display:"flex",flexDirection:"column",animation:"fadeIn 0.3s ease",fontFamily:"Nunito,sans-serif"}}>
       {notification&&<div style={{position:"fixed",top:"20px",left:"50%",transform:"translateX(-50%)",zIndex:300,background:"linear-gradient(135deg,#f0a500,#ffd700)",color:"#0a1628",padding:"8px 20px",borderRadius:"50px",fontWeight:700,animation:"fadeIn 0.2s ease"}}>{notification}</div>}
       <div style={{background:"rgba(10,22,40,0.98)",borderBottom:"1px solid rgba(240,165,0,0.2)",padding:"16px",display:"flex",alignItems:"center",gap:"12px",flexShrink:0}}>
         <button onClick={onClose} style={{background:"rgba(255,255,255,0.05)",border:"none",color:"white",width:"36px",height:"36px",borderRadius:"50%",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"18px"}}>←</button>
@@ -1114,7 +1114,7 @@ function ArcModal({arc,state,onUpdate,onClose}){
           </button>
         ))}
       </div>
-      <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px",paddingBottom:"80px"}}>
         {activeTab==="episodes"&&(
           <div>
             {arc.epsEssential.length>0&&<div style={{marginBottom:"16px"}}><div style={{color:"#f0a500",fontWeight:700,marginBottom:"8px",fontSize:"13px"}}>🌟 Essenciais</div>{arc.epsEssential.map(ep=><EpRow key={ep} ep={ep} type="essential" state={state} onToggle={toggleEp}/>)}</div>}
