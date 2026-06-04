@@ -1146,7 +1146,8 @@ function ArcModal({arc,state,onUpdate,onClose}){
   );
 }
 
-// QUIZ({arc,state,onUpdate,onClose}){
+// QUIZ
+function Quiz({arc,state,onUpdate,onClose}){
   const[questions]=useState(()=>[...arc.quiz].sort(()=>Math.random()-0.5));
   const[current,setCurrent]=useState(0);
   const[selected,setSelected]=useState(null);
