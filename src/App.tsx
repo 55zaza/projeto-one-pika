@@ -1337,18 +1337,33 @@ export default function App(){
     return<DiagnosticQuiz onComplete={handleDiagnosticComplete} onSkip={handleDiagnosticSkip}/>;
   }
 
+  const THEMES={
+    "classic":{bg:"linear-gradient(180deg,#0a1628 0%,#0d2137 60%,#0a1628 100%)",accent:"#f0a500",header:"rgba(10,22,40,0.92)",border:"rgba(240,165,0,0.1)"},
+    "wano-sakura":{bg:"linear-gradient(180deg,#1a0a1e 0%,#2d0a2e 60%,#1a0a1e 100%)",accent:"#ff69b4",header:"rgba(26,10,30,0.92)",border:"rgba(255,105,180,0.15)"},
+    "blackbeard-dark":{bg:"linear-gradient(180deg,#050505 0%,#0d0d0d 60%,#050505 100%)",accent:"#8b0000",header:"rgba(5,5,5,0.95)",border:"rgba(139,0,0,0.2)"},
+    "marine-blue":{bg:"linear-gradient(180deg,#001a33 0%,#002a4d 60%,#001a33 100%)",accent:"#00bfff",header:"rgba(0,26,51,0.92)",border:"rgba(0,191,255,0.15)"},
+  };
+  const theme=THEMES[state.currentTheme||"classic"]||THEMES["classic"];
+
   return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#0a1628 0%,#0d2137 60%,#0a1628 100%)",color:"white",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:theme.bg,color:"white",position:"relative",transition:"background 0.5s ease"}}>
+      <style>{`
+        :root {
+          --accent: ${theme.accent};
+          --header-bg: ${theme.header};
+          --border-color: ${theme.border};
+        }
+      `}</style>
       <WaveBackground/>
       <div style={{position:"relative",zIndex:1,maxWidth:"600px",margin:"0 auto"}}>
-        <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(10,22,40,0.92)",backdropFilter:"blur(12px)",padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid rgba(240,165,0,0.1)"}}>
-          <div style={{fontFamily:"Cinzel,serif",color:"#f0a500",fontSize:"18px",fontWeight:900}}>🏴‍☠️ One Piece</div>
+        <div style={{position:"sticky",top:0,zIndex:50,background:theme.header,backdropFilter:"blur(12px)",padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${theme.border}`,transition:"all 0.5s ease"}}>
+          <div style={{fontFamily:"Cinzel,serif",color:theme.accent,fontSize:"18px",fontWeight:900}}>🏴‍☠️ One Piece</div>
           <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
             <button onClick={()=>setShowAdmin(true)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.4)",width:"32px",height:"32px",borderRadius:"50%",cursor:"pointer",fontSize:"14px",display:"flex",alignItems:"center",justifyContent:"center"}}>⚙️</button>
             <StreakBadge streak={state.streak}/>
-            <div style={{display:"flex",alignItems:"center",gap:"6px",background:"rgba(240,165,0,0.1)",borderRadius:"20px",padding:"4px 12px",border:"1px solid rgba(240,165,0,0.2)"}}>
-              <span style={{color:"#f0a500",fontSize:"12px"}}>⭐</span>
-              <span style={{color:"#f0a500",fontWeight:700,fontFamily:"Cinzel,serif",fontSize:"13px",animation:"pulse-xp 2s ease-in-out infinite"}}>{state.xp} XP</span>
+            <div style={{display:"flex",alignItems:"center",gap:"6px",background:`${theme.accent}18`,borderRadius:"20px",padding:"4px 12px",border:`1px solid ${theme.accent}40`}}>
+              <span style={{color:theme.accent,fontSize:"12px"}}>⭐</span>
+              <span style={{color:theme.accent,fontWeight:700,fontFamily:"Cinzel,serif",fontSize:"13px"}}>{state.xp} XP</span>
             </div>
           </div>
         </div>
