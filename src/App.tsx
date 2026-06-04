@@ -1037,16 +1037,47 @@ function ArcMap({state,onUpdate}){
 }
 
 // EPISODE ROW
-function EpRow({ep,type,state,onToggle}){
-  const watched=(state.watchedEps||[]).includes(ep);
-  const colors={essential:"#f0a500",recommended:"#1abc9c",filler:"rgba(255,255,255,0.3)"};
-  const tags={essential:"ESSENCIAL",recommended:"RECOMEND.",filler:"FILLER"};
+// VIDEO IDs do YouTube por ep (para demonstração — troque pelos IDs reais)
+const EP_VIDEO_IDS: Record<number,string> = {
+  1:"mB6tSxfRinY",2:"mB6tSxfRinY",3:"mB6tSxfRinY",
+  4:"dQw4w9WgXcQ",5:"dQw4w9WgXcQ",8:"dQw4w9WgXcQ",
+  9:"ScMzIvxBSi4",17:"ScMzIvxBSi4",18:"ScMzIvxBSi4",
+  19:"jNQXAC9IVRw",26:"jNQXAC9IVRw",30:"jNQXAC9IVRw",
+  31:"9bZkp7q19f0",37:"9bZkp7q19f0",44:"9bZkp7q19f0",45:"9bZkp7q19f0",
+  52:"ZZ5LpwO-An4",53:"ZZ5LpwO-An4",
+  100:"YQHsXMglC9A",110:"YQHsXMglC9A",129:"YQHsXMglC9A",
+};
+
+function getVideoUrl(ep:number):string{
+  const id=EP_VIDEO_IDS[ep]||"dQw4w9WgXcQ";
+  return`https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
+}
+
+function EpRow({ep,type,state,onToggle,onWatch}:{ep:number,type:string,state:any,onToggle:(ep:number,type:string)=>void,onWatch:(url:string)=>void}){
+  const watched=(state.watchedEps||[]).map(Number).includes(Number(ep));
+  const colors:{[k:string]:string}={essential:"#f0a500",recommended:"#1abc9c",filler:"rgba(255,255,255,0.3)"};
+  const tags:{[k:string]:string}={essential:"ESSENCIAL",recommended:"RECOMEND.",filler:"FILLER"};
   return(
-    <div onClick={()=>onToggle(ep,type)} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",borderRadius:"10px",cursor:"pointer",marginBottom:"4px",background:watched?"rgba(26,188,156,0.08)":"rgba(255,255,255,0.02)",border:`1px solid ${watched?"rgba(26,188,156,0.2)":"rgba(255,255,255,0.04)"}`,transition:"all 0.15s"}}>
-      <div style={{width:"22px",height:"22px",borderRadius:"50%",flexShrink:0,border:`2px solid ${watched?"#1abc9c":colors[type]}`,background:watched?"#1abc9c":"transparent",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:"12px",transition:"all 0.2s"}}>{watched?"✓":""}</div>
-      <div style={{flex:1}}><span style={{color:watched?"rgba(255,255,255,0.5)":"rgba(255,255,255,0.9)",fontSize:"14px",fontWeight:600}}>Ep. {ep}</span></div>
+    <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 12px",borderRadius:"10px",marginBottom:"4px",background:watched?"rgba(26,188,156,0.08)":"rgba(255,255,255,0.02)",border:`1px solid ${watched?"rgba(26,188,156,0.2)":"rgba(255,255,255,0.04)"}`,transition:"all 0.15s"}}>
+      {/* Checkbox */}
+      <div onClick={()=>onToggle(ep,type)} style={{width:"22px",height:"22px",borderRadius:"50%",flexShrink:0,border:`2px solid ${watched?"#1abc9c":colors[type]}`,background:watched?"#1abc9c":"transparent",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:"12px",cursor:"pointer",transition:"all 0.2s"}}>{watched?"✓":""}</div>
+      {/* Info */}
+      <div style={{flex:1,cursor:"pointer"}} onClick={()=>onToggle(ep,type)}>
+        <span style={{color:watched?"rgba(255,255,255,0.5)":"rgba(255,255,255,0.9)",fontSize:"14px",fontWeight:600}}>Ep. {ep}</span>
+      </div>
+      {/* Badge */}
       <div style={{fontSize:"9px",fontWeight:700,color:colors[type],border:`1px solid ${colors[type]}`,padding:"2px 6px",borderRadius:"6px",opacity:0.8,flexShrink:0}}>{tags[type]}</div>
+      {/* Duração */}
       <div style={{color:"rgba(255,255,255,0.3)",fontSize:"11px",flexShrink:0}}>24min</div>
+      {/* Botão Assistir */}
+      <button
+        onClick={e=>{e.stopPropagation();onWatch(getVideoUrl(ep));}}
+        style={{flexShrink:0,background:"linear-gradient(135deg,#c0392b,#e74c3c)",border:"none",borderRadius:"8px",padding:"5px 10px",cursor:"pointer",color:"white",fontSize:"11px",fontWeight:700,fontFamily:"Nunito,sans-serif",display:"flex",alignItems:"center",gap:"4px",transition:"all 0.2s",boxShadow:"0 2px 8px rgba(192,57,43,0.35)"}}
+        onMouseEnter={e=>e.currentTarget.style.transform="scale(1.08)"}
+        onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}
+      >
+        ▶ Ver
+      </button>
     </div>
   );
 }
@@ -1056,19 +1087,22 @@ function ArcModal({arc,state,onUpdate,onClose}){
   const[activeTab,setActiveTab]=useState("episodes");
   const[showQuiz,setShowQuiz]=useState(false);
   const[notification,setNotification]=useState(null);
+  const[activeVideoUrl,setActiveVideoUrl]=useState<string|null>(null);
 
-  const allEssentialWatched=arc.epsEssential.every(ep=>(state.watchedEps||[]).includes(ep));
+  const watchedEps=(state.watchedEps||[]).map(Number);
+  const allEssentialWatched=arc.epsEssential.every(ep=>watchedEps.includes(Number(ep)));
   const quizDone=state.quizResults?.[arc.id]!==undefined;
 
   const showNotif=(msg)=>{setNotification(msg);setTimeout(()=>setNotification(null),2000);};
 
-  const toggleEp=(ep,type)=>{
-    const isWatched=(state.watchedEps||[]).includes(ep);
+  const toggleEp=(ep:number,type:string)=>{
+    const watched=(state.watchedEps||[]).map(Number);
+    const isWatched=watched.includes(Number(ep));
     const xpGain=type==="essential"?10:type==="recommended"?5:2;
-    const newWatched=isWatched?(state.watchedEps||[]).filter(e=>e!==ep):[...(state.watchedEps||[]),ep];
+    const newWatched=isWatched?watched.filter((e:number)=>e!==Number(ep)):[...watched,Number(ep)];
     const newXP=isWatched?Math.max(0,state.xp-xpGain):state.xp+xpGain;
     const newDailyEps=isWatched?Math.max(0,(state.dailyEpsToday||0)-1):(state.dailyEpsToday||0)+1;
-    const allEssDone=arc.epsEssential.every(ep=>newWatched.includes(ep));
+    const allEssDone=arc.epsEssential.every((ep:number)=>newWatched.includes(Number(ep)));
     let newCompleted=[...(state.completedArcs||[])];
     let newUnlocked=[...(state.unlockedArcs||[])];
     if(allEssDone&&!newCompleted.includes(arc.id)){
@@ -1086,6 +1120,33 @@ function ArcModal({arc,state,onUpdate,onClose}){
   if(showQuiz)return<Quiz arc={arc} state={state} onUpdate={onUpdate} onClose={()=>{setShowQuiz(false);onClose();}}/>;
 
   return(
+    <>
+    {/* VIDEO PLAYER MODAL */}
+    {activeVideoUrl&&(
+      <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(10,22,40,0.85)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"16px",animation:"fadeIn 0.25s ease"}}
+        onClick={()=>setActiveVideoUrl(null)}
+      >
+        {/* Botão fechar flutuante */}
+        <button
+          onClick={()=>setActiveVideoUrl(null)}
+          style={{position:"absolute",top:"16px",right:"16px",zIndex:600,background:"rgba(192,57,43,0.9)",border:"2px solid rgba(240,165,0,0.4)",color:"white",width:"44px",height:"44px",borderRadius:"50%",cursor:"pointer",fontSize:"18px",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",transition:"all 0.2s"}}
+          onMouseEnter={e=>{e.currentTarget.style.background="rgba(240,165,0,0.9)";e.currentTarget.style.transform="scale(1.1)";}}
+          onMouseLeave={e=>{e.currentTarget.style.background="rgba(192,57,43,0.9)";e.currentTarget.style.transform="scale(1)";}}
+        >❌</button>
+        {/* Container do vídeo */}
+        <div
+          onClick={e=>e.stopPropagation()}
+          style={{width:"100%",maxWidth:"896px",aspectRatio:"16/9",borderRadius:"16px",overflow:"hidden",border:"2px solid rgba(240,165,0,0.5)",background:"#000",boxShadow:"0 0 60px rgba(240,165,0,0.2), 0 24px 64px rgba(0,0,0,0.6)",animation:"fadeIn 0.3s ease"}}
+        >
+          <iframe
+            src={activeVideoUrl}
+            style={{width:"100%",height:"100%",border:"none",borderRadius:"14px"}}
+            allowFullScreen
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+          />
+        </div>
+      </div>
+    )}
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(5,10,20,0.92)",display:"flex",flexDirection:"column",animation:"fadeIn 0.3s ease",fontFamily:"Nunito,sans-serif"}}>
       {notification&&<div style={{position:"fixed",top:"20px",left:"50%",transform:"translateX(-50%)",zIndex:300,background:"linear-gradient(135deg,#f0a500,#ffd700)",color:"#0a1628",padding:"8px 20px",borderRadius:"50px",fontWeight:700,animation:"fadeIn 0.2s ease"}}>{notification}</div>}
       <div style={{background:"rgba(10,22,40,0.98)",borderBottom:"1px solid rgba(240,165,0,0.2)",padding:"16px",display:"flex",alignItems:"center",gap:"12px",flexShrink:0}}>
@@ -1115,9 +1176,9 @@ function ArcModal({arc,state,onUpdate,onClose}){
       <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
         {activeTab==="episodes"&&(
           <div>
-            {arc.epsEssential.length>0&&<div style={{marginBottom:"16px"}}><div style={{color:"#f0a500",fontWeight:700,marginBottom:"8px",fontSize:"13px"}}>🌟 Essenciais</div>{arc.epsEssential.map(ep=><EpRow key={ep} ep={ep} type="essential" state={state} onToggle={toggleEp}/>)}</div>}
-            {(arc.epsRecommended||[]).length>0&&<div style={{marginBottom:"16px"}}><div style={{color:"#1abc9c",fontWeight:700,marginBottom:"8px",fontSize:"13px"}}>👍 Recomendados</div>{arc.epsRecommended.map(ep=><EpRow key={ep} ep={ep} type="recommended" state={state} onToggle={toggleEp}/>)}</div>}
-            {fillerEps.length>0&&<div style={{marginBottom:"16px"}}><div style={{color:"rgba(255,255,255,0.4)",fontWeight:700,marginBottom:"8px",fontSize:"13px"}}>💤 Fillers (pode pular)</div>{fillerEps.map(ep=><EpRow key={ep} ep={ep} type="filler" state={state} onToggle={toggleEp}/>)}</div>}
+            {arc.epsEssential.length>0&&<div style={{marginBottom:"16px"}}><div style={{color:"#f0a500",fontWeight:700,marginBottom:"8px",fontSize:"13px"}}>🌟 Essenciais</div>{arc.epsEssential.map(ep=><EpRow key={ep} ep={ep} type="essential" state={state} onToggle={toggleEp} onWatch={setActiveVideoUrl}/>)}</div>}
+            {(arc.epsRecommended||[]).length>0&&<div style={{marginBottom:"16px"}}><div style={{color:"#1abc9c",fontWeight:700,marginBottom:"8px",fontSize:"13px"}}>👍 Recomendados</div>{arc.epsRecommended.map(ep=><EpRow key={ep} ep={ep} type="recommended" state={state} onToggle={toggleEp} onWatch={setActiveVideoUrl}/>)}</div>}
+            {fillerEps.length>0&&<div style={{marginBottom:"16px"}}><div style={{color:"rgba(255,255,255,0.4)",fontWeight:700,marginBottom:"8px",fontSize:"13px"}}>💤 Fillers (pode pular)</div>{fillerEps.map(ep=><EpRow key={ep} ep={ep} type="filler" state={state} onToggle={toggleEp} onWatch={setActiveVideoUrl}/>)}</div>}
           </div>
         )}
         {activeTab==="tips"&&(
@@ -1141,10 +1202,9 @@ function ArcModal({arc,state,onUpdate,onClose}){
         )}
       </div>
     </div>
+    </>
   );
 }
-
-// QUIZ
 function Quiz({arc,state,onUpdate,onClose}){
   const[questions]=useState(()=>[...arc.quiz].sort(()=>Math.random()-0.5));
   const[current,setCurrent]=useState(0);
