@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import DiagnosticQuiz from "./DiagnosticQuiz";
+import AdminPanel from "./AdminPanel";
 
 // ============================================================
 // EPISODES POOL — banco de episódios épicos por arco
@@ -1308,6 +1309,8 @@ export default function App(){
     setShowDiagnostic(true);
   };
 
+  const[showAdmin,setShowAdmin]=useState(false);
+
   const handleDiagnosticComplete=(result)=>{
     setState(s=>({
       ...s,
@@ -1340,7 +1343,8 @@ export default function App(){
       <div style={{position:"relative",zIndex:1,maxWidth:"600px",margin:"0 auto"}}>
         <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(10,22,40,0.92)",backdropFilter:"blur(12px)",padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid rgba(240,165,0,0.1)"}}>
           <div style={{fontFamily:"Cinzel,serif",color:"#f0a500",fontSize:"18px",fontWeight:900}}>🏴‍☠️ One Piece</div>
-          <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+            <button onClick={()=>setShowAdmin(true)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.4)",width:"32px",height:"32px",borderRadius:"50%",cursor:"pointer",fontSize:"14px",display:"flex",alignItems:"center",justifyContent:"center"}}>⚙️</button>
             <StreakBadge streak={state.streak}/>
             <div style={{display:"flex",alignItems:"center",gap:"6px",background:"rgba(240,165,0,0.1)",borderRadius:"20px",padding:"4px 12px",border:"1px solid rgba(240,165,0,0.2)"}}>
               <span style={{color:"#f0a500",fontSize:"12px"}}>⭐</span>
@@ -1354,6 +1358,7 @@ export default function App(){
         {screen==="guide"&&<Guide/>}
       </div>
       <Header onNav={setScreen} currentScreen={screen}/>
+      {showAdmin&&<AdminPanel state={state} onUpdate={handleUpdate} onClose={()=>setShowAdmin(false)}/>}
     </div>
   );
 }
