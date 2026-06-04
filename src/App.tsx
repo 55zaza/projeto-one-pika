@@ -1199,7 +1199,7 @@ function Quiz({arc,state,onUpdate,onClose}){
   }
 
   return(
-    <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(5,10,20,0.98)",display:"flex",flexDirection:"column",padding:"20px",fontFamily:"Nunito,sans-serif",animation:"fadeIn 0.4s ease"}}>
+    <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(5,10,20,0.98)",display:"flex",flexDirection:"column",fontFamily:"Nunito,sans-serif",animation:"fadeIn 0.4s ease",overflowY:"auto",padding:"20px 20px 40px"}}>
       <div style={{marginBottom:"20px"}}>
         <div style={{display:"flex",justifyContent:"space-between",color:"rgba(255,255,255,0.6)",fontSize:"13px",marginBottom:"8px"}}><span>Quiz — {arc.name}</span><span>{current+1}/{questions.length}</span></div>
         <div style={{height:"6px",background:"rgba(255,255,255,0.08)",borderRadius:"3px",overflow:"hidden"}}>
@@ -1210,7 +1210,7 @@ function Quiz({arc,state,onUpdate,onClose}){
         <div style={{color:"rgba(240,165,0,0.6)",fontSize:"12px",fontWeight:700,marginBottom:"8px"}}>PERGUNTA {current+1}</div>
         <p style={{color:"white",fontSize:"17px",fontWeight:700,lineHeight:1.5,margin:0}}>{q.q}</p>
       </div>
-      <div style={{display:"flex",flexDirection:"column",gap:"10px",flex:1}}>
+      <div style={{display:"flex",flexDirection:"column",gap:"10px",marginBottom:"16px"}}>
         {q.opts.map((opt,i)=>{
           let bg="rgba(255,255,255,0.03)",border="rgba(255,255,255,0.1)",color="rgba(255,255,255,0.9)";
           if(answered){if(i===q.correct){bg="rgba(26,188,156,0.15)";border="#1abc9c";color="#1abc9c";}else if(i===selected&&i!==q.correct){bg="rgba(192,57,43,0.15)";border="#c0392b";color="#c0392b";}}
@@ -1225,7 +1225,11 @@ function Quiz({arc,state,onUpdate,onClose}){
           );
         })}
       </div>
-      {answered&&<button onClick={handleNext} style={{marginTop:"16px",width:"100%",padding:"14px",borderRadius:"16px",background:"linear-gradient(135deg,#f0a500,#ffd700)",color:"#0a1628",border:"none",cursor:"pointer",fontFamily:"Cinzel,serif",fontWeight:700,fontSize:"16px"}}>{current<questions.length-1?"Próxima Pergunta →":"Ver Resultado 🏆"}</button>}
+      {answered&&(
+        <button onClick={handleNext} style={{width:"100%",padding:"16px",borderRadius:"16px",background:"linear-gradient(135deg,#f0a500,#ffd700)",color:"#0a1628",border:"none",cursor:"pointer",fontFamily:"Cinzel,serif",fontWeight:700,fontSize:"16px",boxShadow:"0 4px 20px rgba(240,165,0,0.3)"}}>
+          {current<questions.length-1?"Próxima Pergunta →":"Ver Resultado 🏆"}
+        </button>
+      )}
     </div>
   );
 }
