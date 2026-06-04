@@ -1,4 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import ZoroCatMascot from "./components/ZoroCatMascot";
+import { useGameFeatures } from "./hooks/useGameFeatures";
+import { EPISODES_POOL, recommendEpisodes, ARC_ORDER } from "./data/episodesPool";
+import { SHOP_ITEMS, THEMES } from "./types/game";
+import type { SkinId, MascotMood } from "./types/game";
 
 // ============================================================
 // DATA
@@ -302,6 +307,27 @@ const INITIAL_STATE = {
   skippedFillers: 0,
   perfectQuizzes: 0,
   consecutivePerfect: 0,
+  // Novos campos expandidos
+  streakFreeze: false,
+  xpMultiplier: { active: false, expiresAt: null },
+  wrongQuestions: [],
+  bountyBerries: 0,
+  unlockedSkins: ["default"],
+  currentSkin: "default" as SkinId,
+  currentTheme: "classic",
+  unlockedTitles: ["Recruta"],
+  currentTitle: "Recruta",
+  unlockedCharacters: [],
+  dailyChallengesStatus: [],
+  lastChallengeDate: "",
+  spoilerFilterEp: 9999,
+  pirateWager: { active: false, amount: 0 },
+  weeklyXP: 0,
+  lastWeekReset: "",
+  lastFishTime: 0,
+  todayWatched: 0,
+  lastWatchDate: "",
+  lastActiveDate: "",
 };
 
 // ============================================================
@@ -727,6 +753,452 @@ function Dashboard({ state, onUpdate, onNav }) {
       }}>
         {MOTIVATIONAL[Math.floor(Math.random()*MOTIVATIONAL.length)]}
       </div>
+
+      {/* ── MASCOTE ZORO-GATO ── */}
+      <div style={{
+        background:"rgba(255,255,255,0.03)",borderRadius:"20px",
+        border:"1px solid rgba(240,165,0,0.15)",padding:"16px",
+        marginTop:"16px",display:"flex",flexDirection:"column",alignItems:"center",gap:"8px",
+      }}>
+        <div style={{fontFamily:"Cinzel,serif",color:"#f0a500",fontSize:"13px",fontWeight:700,alignSelf:"flex-start"}}>
+          🐱 Zoro-Gato
+        </div>
+        <ZoroCatMascot
+          skin={(state.currentSkin || "default") as SkinId}
+          mood={state.streak >= 3 ? "happy" : state.xp === 0 ? "normal" : "happy"}
+          xp={state.xp}
+        />
+        <div style={{fontSize:"11px",color:"rgba(255,255,255,0.4)",textAlign:"center"}}>
+          Recompensa: 🏴‍☠️ {(state.xp * 1.5).toFixed(0)} Berries
+        </div>
+      </div>
+
+      {/* ── ACORDEI! RECOMENDA UM EP ── */}
+      <WakeUpRecommender state={state} onNav={onNav}/>
+
+      {/* ── DESAFIOS DIÁRIOS ── */}
+      <DailyChallenges state={state} onUpdate={onUpdate}/>
+
+      {/* ── MINIJOGO DE PESCA ── */}
+      <FishingGame state={state} onUpdate={onUpdate}/>
+
+      {/* ── LOJA DO MERCADO NEGRO ── */}
+      <BlackMarketShop state={state} onUpdate={onUpdate}/>
+
+      {/* ── LIGAS COMPETITIVAS ── */}
+      <LeaguePanel state={state}/>
+    </div>
+  );
+}
+
+// ── WAKE UP RECOMMENDER ──────────────────────────────────────
+function WakeUpRecommender({ state, onNav }) {
+  const [showModal, setShowModal] = useState(false);
+  const [minutes, setMinutes] = useState(60);
+  const [recs, setRecs] = useState([]);
+
+  const currentArcId = useMemo(() => {
+    return state.unlockedArcs.find(id => !state.completedArcs.includes(id)) || ARC_ORDER[0];
+  }, [state.unlockedArcs, state.completedArcs]);
+
+  const handleRecommend = () => {
+    const results = recommendEpisodes(minutes, currentArcId, {[currentArcId]: state.watchedEps || []}, state.spoilerFilterEp || 9999);
+    setRecs(results);
+  };
+
+  const maxEps = Math.floor(minutes / 24);
+
+  return (
+    <>
+      <button onClick={() => setShowModal(true)} style={{
+        width:"100%",marginTop:"16px",padding:"18px",borderRadius:"20px",
+        background:"linear-gradient(135deg,#c0392b,#e74c3c)",color:"white",
+        border:"none",cursor:"pointer",
+        fontFamily:"Cinzel,serif",fontWeight:700,fontSize:"17px",
+        boxShadow:"0 8px 24px rgba(192,57,43,0.4)",
+        transform:"translateY(0)",transition:"all 0.2s",
+        display:"flex",alignItems:"center",justifyContent:"center",gap:"10px",
+      }}
+      onMouseEnter={e=>(e.currentTarget.style.transform="translateY(-3px)")}
+      onMouseLeave={e=>(e.currentTarget.style.transform="translateY(0)")}
+      >
+        🍖 Acordei! Me recomenda um EP!
+      </button>
+
+      {showModal && (
+        <div style={{
+          position:"fixed",inset:0,zIndex:200,background:"rgba(5,10,20,0.95)",
+          display:"flex",flexDirection:"column",padding:"24px",
+          fontFamily:"Nunito,sans-serif",animation:"fadeIn 0.3s ease",
+          overflowY:"auto",
+        }}>
+          <div style={{maxWidth:"480px",width:"100%",margin:"0 auto"}}>
+            <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"24px"}}>
+              <button onClick={()=>setShowModal(false)} style={{
+                background:"rgba(255,255,255,0.05)",border:"none",color:"white",
+                width:"36px",height:"36px",borderRadius:"50%",cursor:"pointer",fontSize:"18px",
+              }}>←</button>
+              <div style={{fontFamily:"Cinzel,serif",color:"#f0a500",fontSize:"20px",fontWeight:700}}>
+                🍖 Modo Acordei!
+              </div>
+            </div>
+
+            <div style={{
+              background:"rgba(192,57,43,0.1)",borderRadius:"20px",
+              border:"2px solid rgba(192,57,43,0.3)",padding:"20px",marginBottom:"20px",
+            }}>
+              <div style={{color:"white",fontWeight:700,marginBottom:"16px",fontSize:"16px"}}>
+                Quanto tempo livre você tem?
+              </div>
+              <div style={{
+                fontFamily:"Cinzel,serif",fontSize:"48px",fontWeight:900,
+                color:"#f0a500",textAlign:"center",marginBottom:"8px",
+              }}>{minutes}min</div>
+              <div style={{color:"rgba(255,255,255,0.5)",textAlign:"center",marginBottom:"16px",fontSize:"13px"}}>
+                ≈ {maxEps} episódio{maxEps !== 1 ? "s" : ""} ({(minutes/60).toFixed(1)}h)
+              </div>
+              <input type="range" min="24" max="480" step="24" value={minutes}
+                onChange={e=>setMinutes(Number(e.target.value))}
+                style={{width:"100%",accentColor:"#f0a500"}}
+              />
+              <div style={{display:"flex",justifyContent:"space-between",color:"rgba(255,255,255,0.4)",fontSize:"11px",marginTop:"4px"}}>
+                <span>24min (1ep)</span><span>8h (20eps)</span>
+              </div>
+            </div>
+
+            <button onClick={handleRecommend} style={{
+              width:"100%",padding:"14px",borderRadius:"16px",
+              background:"linear-gradient(135deg,#f0a500,#ffd700)",color:"#0a1628",
+              border:"none",cursor:"pointer",fontFamily:"Cinzel,serif",fontWeight:700,fontSize:"16px",
+              marginBottom:"20px",
+            }}>
+              🗺️ Me mostra o que assistir!
+            </button>
+
+            {recs.length > 0 ? (
+              <div style={{display:"flex",flexDirection:"column",gap:"12px"}}>
+                <div style={{color:"#f0a500",fontWeight:700,fontFamily:"Cinzel,serif",marginBottom:"4px"}}>
+                  Seus episódios de hoje:
+                </div>
+                {recs.map(ep => (
+                  <div key={ep.num} style={{
+                    background:"rgba(255,255,255,0.04)",borderRadius:"16px",
+                    border:"1px solid rgba(240,165,0,0.2)",padding:"14px",
+                  }}>
+                    <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"6px"}}>
+                      <div style={{
+                        background:"linear-gradient(135deg,#f0a500,#ffd700)",
+                        borderRadius:"8px",padding:"4px 10px",
+                        fontFamily:"Cinzel,serif",fontWeight:700,fontSize:"13px",color:"#0a1628",
+                      }}>EP {ep.num}</div>
+                      <div style={{color:"white",fontWeight:700,fontSize:"14px",flex:1}}>{ep.title}</div>
+                    </div>
+                    <div style={{color:"rgba(245,240,232,0.7)",fontSize:"13px",lineHeight:1.6}}>{ep.desc}</div>
+                  </div>
+                ))}
+              </div>
+            ) : recs.length === 0 && minutes > 0 && (
+              <div style={{
+                textAlign:"center",color:"rgba(255,255,255,0.5)",padding:"20px",
+                background:"rgba(255,255,255,0.03)",borderRadius:"16px",
+              }}>
+                {maxEps === 0
+                  ? "Você precisa de pelo menos 24 minutos para assistir 1 episódio! 😅"
+                  : "Você já assistiu todos os episódios épicos deste arco! Vai pro próximo! 🏴‍☠️"
+                }
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ── DAILY CHALLENGES ─────────────────────────────────────────
+function DailyChallenges({ state, onUpdate }) {
+  const { generateDailyChallenges } = useGameFeatures(state, onUpdate);
+
+  useEffect(() => {
+    generateDailyChallenges();
+  }, []);
+
+  const challenges = state.dailyChallengesStatus || [];
+
+  return (
+    <div style={{
+      background:"rgba(255,255,255,0.03)",borderRadius:"20px",
+      border:"1px solid rgba(26,188,156,0.2)",padding:"16px",marginTop:"16px",
+    }}>
+      <div style={{fontFamily:"Cinzel,serif",color:"#1abc9c",fontSize:"15px",fontWeight:700,marginBottom:"12px"}}>
+        ⚓ Desafios Diários
+      </div>
+      {challenges.length === 0 ? (
+        <div style={{color:"rgba(255,255,255,0.4)",fontSize:"13px",textAlign:"center",padding:"8px"}}>
+          Carregando desafios...
+        </div>
+      ) : challenges.map(c => (
+        <div key={c.id} style={{
+          display:"flex",alignItems:"center",gap:"12px",padding:"10px",
+          borderRadius:"12px",marginBottom:"8px",
+          background:c.done?"rgba(26,188,156,0.1)":"rgba(255,255,255,0.02)",
+          border:`1px solid ${c.done?"rgba(26,188,156,0.3)":"rgba(255,255,255,0.05)"}`,
+        }}>
+          <div style={{fontSize:"20px"}}>{c.done?"✅":"🎯"}</div>
+          <div style={{flex:1}}>
+            <div style={{color:c.done?"rgba(255,255,255,0.5)":"white",fontSize:"13px",fontWeight:600}}>{c.desc}</div>
+            <div style={{height:"4px",background:"rgba(255,255,255,0.08)",borderRadius:"2px",marginTop:"4px",overflow:"hidden"}}>
+              <div style={{
+                width:`${Math.min(100, (c.current/c.target)*100)}%`,
+                height:"100%",background:"linear-gradient(90deg,#1abc9c,#2ecc71)",
+                borderRadius:"2px",transition:"width 0.4s",
+              }}/>
+            </div>
+            <div style={{color:"rgba(255,255,255,0.4)",fontSize:"11px",marginTop:"2px"}}>
+              {c.current}/{c.target} • Recompensa: +{c.reward} XP
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── FISHING MINIGAME ──────────────────────────────────────────
+function FishingGame({ state, onUpdate }) {
+  const { canFish, fish } = useGameFeatures(state, onUpdate);
+  const [result, setResult] = useState(null);
+  const [casting, setCasting] = useState(false);
+
+  const handleFish = () => {
+    if (!canFish() || casting) return;
+    setCasting(true);
+    setResult(null);
+    setTimeout(() => {
+      const res = fish();
+      setResult(res);
+      setCasting(false);
+    }, 1200);
+  };
+
+  const cooldownLeft = Math.max(0, Math.ceil((state.lastFishTime + 60000 - Date.now()) / 1000));
+  const ready = canFish();
+
+  return (
+    <div style={{
+      background:"rgba(255,255,255,0.03)",borderRadius:"20px",
+      border:"1px solid rgba(26,188,156,0.15)",padding:"16px",marginTop:"16px",
+    }}>
+      <div style={{fontFamily:"Cinzel,serif",color:"#1abc9c",fontSize:"15px",fontWeight:700,marginBottom:"12px"}}>
+        🎣 Minijogo de Pesca
+      </div>
+      <div style={{textAlign:"center"}}>
+        <div style={{fontSize:"48px",marginBottom:"12px",animation:casting?"float 0.5s ease-in-out infinite":"none"}}>
+          {casting?"🎣":"🐟"}
+        </div>
+        {result && (
+          <div style={{
+            background:"rgba(240,165,0,0.1)",borderRadius:"12px",padding:"10px",
+            border:"1px solid rgba(240,165,0,0.2)",marginBottom:"12px",
+            color:"#f0a500",fontWeight:700,fontSize:"14px",
+          }}>{result.message}</div>
+        )}
+        <button onClick={handleFish} disabled={!ready || casting} style={{
+          padding:"12px 32px",borderRadius:"50px",border:"none",cursor:ready&&!casting?"pointer":"not-allowed",
+          background:ready&&!casting?"linear-gradient(135deg,#1abc9c,#2ecc71)":"rgba(255,255,255,0.1)",
+          color:ready&&!casting?"#0a1628":"rgba(255,255,255,0.4)",
+          fontFamily:"Cinzel,serif",fontWeight:700,fontSize:"14px",transition:"all 0.2s",
+        }}>
+          {casting ? "Pescando..." : ready ? "🎣 Pescar!" : `⏳ ${cooldownLeft}s`}
+        </button>
+        <div style={{color:"rgba(255,255,255,0.3)",fontSize:"11px",marginTop:"8px"}}>
+          1 pesca por minuto • Chance de 1-5 XP
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── BLACK MARKET SHOP ─────────────────────────────────────────
+function BlackMarketShop({ state, onUpdate }) {
+  const [activeTab, setActiveTab] = useState("skins");
+  const [notification, setNotification] = useState(null);
+  const { purchaseItem } = useGameFeatures(state, onUpdate);
+
+  const showNotif = (msg, ok) => {
+    setNotification({msg, ok});
+    setTimeout(()=>setNotification(null), 2500);
+  };
+
+  const handleBuy = (itemId) => {
+    const result = purchaseItem(itemId);
+    showNotif(result.message, result.success);
+  };
+
+  const tabs = [
+    {id:"skins", label:"🐱 Skins"},
+    {id:"themes", label:"🎨 Temas"},
+    {id:"titles", label:"👑 Títulos"},
+    {id:"items", label:"⚡ Itens"},
+  ];
+
+  const filteredItems = SHOP_ITEMS.filter(i => {
+    if (activeTab === "skins") return i.type === "skin";
+    if (activeTab === "themes") return i.type === "theme";
+    if (activeTab === "titles") return i.type === "title";
+    return i.type === "item";
+  });
+
+  return (
+    <div style={{
+      background:"rgba(255,255,255,0.03)",borderRadius:"20px",
+      border:"1px solid rgba(240,165,0,0.2)",padding:"16px",marginTop:"16px",
+    }}>
+      {notification && (
+        <div style={{
+          position:"fixed",top:"20px",left:"50%",transform:"translateX(-50%)",zIndex:1000,
+          background:notification.ok?"linear-gradient(135deg,#1abc9c,#2ecc71)":"linear-gradient(135deg,#c0392b,#e74c3c)",
+          color:"white",padding:"10px 20px",borderRadius:"50px",fontWeight:700,
+          animation:"fadeIn 0.3s ease",boxShadow:"0 4px 20px rgba(0,0,0,0.3)",
+          whiteSpace:"nowrap",fontFamily:"Nunito,sans-serif",zIndex:2000,
+        }}>{notification.msg}</div>
+      )}
+
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+        <div style={{fontFamily:"Cinzel,serif",color:"#f0a500",fontSize:"15px",fontWeight:700}}>
+          🏪 Mercado Negro de Sabaody
+        </div>
+        <div style={{
+          background:"rgba(240,165,0,0.1)",borderRadius:"50px",
+          padding:"4px 12px",border:"1px solid rgba(240,165,0,0.3)",
+          color:"#f0a500",fontWeight:700,fontSize:"13px",fontFamily:"Cinzel,serif",
+        }}>⭐ {state.xp} XP</div>
+      </div>
+
+      <div style={{display:"flex",gap:"6px",marginBottom:"12px",overflowX:"auto"}}>
+        {tabs.map(t=>(
+          <button key={t.id} onClick={()=>setActiveTab(t.id)} style={{
+            padding:"6px 12px",borderRadius:"20px",border:"none",cursor:"pointer",
+            background:activeTab===t.id?"rgba(240,165,0,0.2)":"rgba(255,255,255,0.04)",
+            color:activeTab===t.id?"#f0a500":"rgba(255,255,255,0.5)",
+            fontWeight:700,fontSize:"12px",whiteSpace:"nowrap",fontFamily:"Nunito,sans-serif",
+            borderBottom:activeTab===t.id?"2px solid #f0a500":"2px solid transparent",
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+        {filteredItems.map(item => {
+          const owned = item.type === "skin"
+            ? state.unlockedSkins?.includes(item.id)
+            : item.type === "title"
+            ? state.unlockedTitles?.includes(item.id.replace("title-","").charAt(0).toUpperCase()+item.id.replace("title-","").slice(1))
+            : false;
+          const canAfford = state.xp >= item.cost;
+
+          return (
+            <div key={item.id} style={{
+              display:"flex",alignItems:"center",gap:"12px",padding:"12px",
+              borderRadius:"14px",
+              background:owned?"rgba(26,188,156,0.06)":"rgba(255,255,255,0.02)",
+              border:`1px solid ${owned?"rgba(26,188,156,0.2)":"rgba(255,255,255,0.06)"}`,
+            }}>
+              <div style={{flex:1}}>
+                <div style={{color:"white",fontWeight:700,fontSize:"14px"}}>{item.name}</div>
+                <div style={{color:"rgba(255,255,255,0.5)",fontSize:"12px"}}>{item.description}</div>
+                <div style={{color:"#f0a500",fontSize:"12px",fontWeight:700,marginTop:"2px"}}>⭐ {item.cost} XP</div>
+              </div>
+              <button onClick={()=>!owned&&handleBuy(item.id)} disabled={owned||!canAfford} style={{
+                padding:"8px 14px",borderRadius:"12px",border:"none",
+                cursor:owned||!canAfford?"not-allowed":"pointer",
+                background:owned?"rgba(26,188,156,0.2)":canAfford?"linear-gradient(135deg,#f0a500,#ffd700)":"rgba(255,255,255,0.08)",
+                color:owned?"#1abc9c":canAfford?"#0a1628":"rgba(255,255,255,0.3)",
+                fontWeight:700,fontSize:"12px",whiteSpace:"nowrap",fontFamily:"Nunito,sans-serif",
+                transition:"all 0.2s",flexShrink:0,
+              }}>
+                {owned ? "✓ Obtido" : canAfford ? "Comprar" : "Sem XP"}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── LEAGUE PANEL ──────────────────────────────────────────────
+function LeaguePanel({ state }) {
+  const LEAGUES = [
+    {name:"East Blue", icon:"🌊", minXP:0, maxXP:500, color:"#3498db"},
+    {name:"Grand Line", icon:"🗺️", minXP:500, maxXP:1500, color:"#2ecc71"},
+    {name:"New World", icon:"⚔️", minXP:1500, maxXP:3000, color:"#9b59b6"},
+    {name:"Marineford", icon:"⚓", minXP:3000, maxXP:6000, color:"#e67e22"},
+    {name:"Novo Mundo", icon:"👑", minXP:6000, maxXP:99999, color:"#f0a500"},
+  ];
+
+  const currentLeague = LEAGUES.find(l => state.xp >= l.minXP && state.xp < l.maxXP) || LEAGUES[LEAGUES.length-1];
+  const leagueProgress = currentLeague.maxXP === 99999 ? 100
+    : ((state.xp - currentLeague.minXP) / (currentLeague.maxXP - currentLeague.minXP)) * 100;
+
+  const bots = [
+    {name:"Buggy_Fan", xp: Math.max(10, (state.weeklyXP||0) + 80 + Math.floor(Math.random()*40-20)), avatar:"🤡"},
+    {name:"Sogeking_King", xp: Math.max(10, (state.weeklyXP||0) + 120 + Math.floor(Math.random()*40-20)), avatar:"🎯"},
+    {name:"Nami_Nav", xp: Math.max(10, (state.weeklyXP||0) + 60 + Math.floor(Math.random()*40-20)), avatar:"🗺️"},
+  ];
+  const ranking = [{name:"Você", xp: state.weeklyXP||0, avatar:"🏴‍☠️"}, ...bots]
+    .sort((a,b)=>b.xp-a.xp);
+
+  return (
+    <div style={{
+      background:"rgba(255,255,255,0.03)",borderRadius:"20px",
+      border:"1px solid rgba(240,165,0,0.15)",padding:"16px",marginTop:"16px",
+    }}>
+      <div style={{fontFamily:"Cinzel,serif",color:"#f0a500",fontSize:"15px",fontWeight:700,marginBottom:"12px"}}>
+        🏆 Liga Pirata
+      </div>
+
+      <div style={{
+        background:"rgba(240,165,0,0.08)",borderRadius:"16px",padding:"14px",
+        border:"1px solid rgba(240,165,0,0.2)",marginBottom:"12px",textAlign:"center",
+      }}>
+        <div style={{fontSize:"32px",marginBottom:"4px"}}>{currentLeague.icon}</div>
+        <div style={{fontFamily:"Cinzel,serif",color:"#f0a500",fontWeight:700,fontSize:"16px"}}>{currentLeague.name}</div>
+        <div style={{height:"6px",background:"rgba(255,255,255,0.08)",borderRadius:"3px",margin:"8px 0",overflow:"hidden"}}>
+          <div style={{
+            width:`${leagueProgress}%`,height:"100%",
+            background:`linear-gradient(90deg,${currentLeague.color},#ffd700)`,
+            borderRadius:"3px",transition:"width 0.5s",
+          }}/>
+        </div>
+        <div style={{color:"rgba(255,255,255,0.5)",fontSize:"12px"}}>
+          {state.xp} / {currentLeague.maxXP === 99999 ? "∞" : currentLeague.maxXP} XP total
+        </div>
+      </div>
+
+      <div style={{fontWeight:700,color:"rgba(255,255,255,0.6)",fontSize:"12px",marginBottom:"8px"}}>
+        RANKING SEMANAL
+      </div>
+      {ranking.map((p, i) => (
+        <div key={p.name} style={{
+          display:"flex",alignItems:"center",gap:"10px",padding:"8px 10px",
+          borderRadius:"10px",marginBottom:"4px",
+          background:p.name==="Você"?"rgba(240,165,0,0.08)":"rgba(255,255,255,0.02)",
+          border:`1px solid ${p.name==="Você"?"rgba(240,165,0,0.2)":"transparent"}`,
+        }}>
+          <div style={{
+            fontFamily:"Cinzel,serif",fontWeight:700,fontSize:"14px",
+            color:i===0?"#ffd700":i===1?"#c0c0c0":i===2?"#cd7f32":"rgba(255,255,255,0.4)",
+            width:"20px",
+          }}>{i+1}</div>
+          <div style={{fontSize:"20px"}}>{p.avatar}</div>
+          <div style={{flex:1,color:p.name==="Você"?"#f0a500":"rgba(255,255,255,0.8)",fontWeight:p.name==="Você"?700:400,fontSize:"14px"}}>
+            {p.name}
+          </div>
+          <div style={{color:"#f0a500",fontWeight:700,fontFamily:"Cinzel,serif",fontSize:"13px"}}>
+            {p.xp} XP
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
