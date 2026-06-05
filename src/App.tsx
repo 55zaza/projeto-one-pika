@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import DiagnosticQuiz from "./DiagnosticQuiz";
 import AdminPanel from "./AdminPanel";
+import AIChat from "./AIChat";
 
 // ============================================================
 // EPISODES POOL — banco de episódios épicos por arco
@@ -593,6 +594,7 @@ function Header({onNav,currentScreen}){
   const navItems=[
     {id:"dashboard",icon:"🏠",label:"Início"},
     {id:"map",icon:"🗺️",label:"Mapa"},
+    {id:"chat",icon:"🐱",label:"Chat IA"},
     {id:"profile",icon:"👤",label:"Perfil"},
     {id:"guide",icon:"📖",label:"Guia"},
   ];
@@ -1378,6 +1380,7 @@ export default function App(){
         </div>
         {screen==="dashboard"&&<Dashboard state={state} onUpdate={handleUpdate} onNav={setScreen}/>}
         {screen==="map"&&<ArcMap state={state} onUpdate={handleUpdate}/>}
+        {screen==="chat"&&<AIChat state={state}/>}
         {screen==="profile"&&<Profile state={state}/>}
         {screen==="guide"&&<Guide/>}
       </div>
