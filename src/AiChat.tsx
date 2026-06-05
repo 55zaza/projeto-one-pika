@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 
 // ⚠️ Coloca sua chave aqui — pega GRÁTIS em: https://console.groq.com
-const GROQ_API_KEY = "SUA_CHAVE_AQUI";
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || "";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 interface Message {
@@ -141,7 +141,7 @@ export default function AIChat({ state }: Props) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 60px)", fontFamily: "Nunito, sans-serif" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 60px)", fontFamily: "Nunito, sans-serif", position: "relative" }}>
       <style>{`
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
@@ -177,7 +177,7 @@ export default function AIChat({ state }: Props) {
       </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "80px", display: "flex", flexDirection: "column", gap: "12px" }}>
         {messages.map((msg, i) => (
           <div key={i} className="msg" style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", gap: "8px", alignItems: "flex-end" }}>
             {msg.role === "assistant" && (
@@ -229,7 +229,7 @@ export default function AIChat({ state }: Props) {
       )}
 
       {/* Input */}
-      <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(240,165,0,0.1)", background: "rgba(10,22,40,0.9)", flexShrink: 0, display: "flex", gap: "10px", alignItems: "center" }}>
+      <div style={{ padding: "12px 16px", paddingBottom: "max(12px, env(safe-area-inset-bottom))", borderTop: "1px solid rgba(240,165,0,0.1)", background: "rgba(10,22,40,0.98)", flexShrink: 0, display: "flex", gap: "10px", alignItems: "center", position: "sticky", bottom: 0, zIndex: 10 }}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
