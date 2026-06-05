@@ -141,7 +141,7 @@ export default function AIChat({ state }: Props) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 60px)", fontFamily: "Nunito, sans-serif", position: "relative" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 120px)", fontFamily: "Nunito, sans-serif", position: "relative" }}>
       <style>{`
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
