@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import DiagnosticQuiz from "./DiagnosticQuiz";
 import AdminPanel from "./AdminPanel";
-import AIChat from "./AiChat"; 
+import AIChat from "./AiChat";
 
 // ============================================================
 // EPISODES POOL — banco de episódios épicos por arco
