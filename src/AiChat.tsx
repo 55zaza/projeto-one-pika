@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 
 // ⚠️ Coloca sua chave aqui — pega GRÁTIS em: https://console.groq.com
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || "";
+const GROQ_API_KEY = "SUA_CHAVE_AQUI";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 interface Message {
@@ -58,7 +58,7 @@ export default function AIChat({ state }: Props) {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const noKey = GROQ_API_KEY === "SUA_CHAVE_AQUI";
+  const noKey = !GROQ_API_KEY || GROQ_API_KEY === "";
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
